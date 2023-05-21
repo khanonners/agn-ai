@@ -16,7 +16,7 @@ export const CharacterCardView: Component<ViewProps> = (props) => {
           <Show when={props.showGrouping}>
             <h2 class="text-xl font-bold">{group.label}</h2>
           </Show>
-          <div class="grid w-full grid-cols-[repeat(auto-fit,minmax(160px,1fr))] flex-row flex-wrap justify-start gap-2 py-2">
+          <div class="auto-rows-[minmax(250px, auto)] grid w-full grid-cols-[repeat(auto-fit,minmax(200px,1fr))] flex-row flex-wrap justify-start gap-2 py-2">
             <For each={group.list}>
               {(char) => (
                 <Character
@@ -50,14 +50,14 @@ const Character: Component<CardProps> = (props) => {
   return (
     <div
       ref={ref}
-      class="bg-800 flex flex-col items-center justify-between gap-1 rounded-lg border-[1px] border-[var(--bg-600)]"
+      class="h-[300px] bg-800 flex flex-col items-center justify-between gap-1 rounded-lg border-[1px] border-[var(--bg-600)]"
     >
       <div class="w-full">
         <Switch>
           <Match when={props.char.visualType === 'sprite' && props.char.sprite}>
             <A
               href={`/character/${props.char._id}/chats`}
-              class="block h-32 w-full justify-center overflow-hidden rounded-lg"
+              class="block h-60 w-full justify-center overflow-hidden rounded-lg"
             >
               <AvatarContainer container={ref} body={props.char.sprite} />
             </A>
@@ -65,7 +65,7 @@ const Character: Component<CardProps> = (props) => {
           <Match when={props.char.avatar}>
             <A
               href={`/character/${props.char._id}/chats`}
-              class="block h-32 w-full justify-center overflow-hidden rounded-lg rounded-b-none"
+              class="block h-60 w-full justify-center overflow-hidden rounded-lg rounded-b-none"
             >
               <img
                 src={getAssetUrl(props.char.avatar!)}
@@ -77,7 +77,7 @@ const Character: Component<CardProps> = (props) => {
           <Match when>
             <A
               href={`/character/${props.char._id}/chats`}
-              class="bg-700 flex h-32 w-full items-center justify-center rounded-lg rounded-b-none"
+              class="bg-700 flex h-60 w-full items-center justify-center rounded-lg rounded-b-none"
             >
               <VenetianMask size={24} />
             </A>
@@ -88,7 +88,7 @@ const Character: Component<CardProps> = (props) => {
         <div class="overflow-hidden text-ellipsis whitespace-nowrap px-1 text-center font-bold">
           {props.char.name}
         </div>
-        <div class="text-600 line-clamp-3 h-[3rem] text-ellipsis px-1 text-center text-xs font-normal">
+        <div class="text-600 line-clamp-2 h-[2rem] text-ellipsis px-1 text-center text-xs font-normal">
           {props.char.description}
         </div>
         {/* hacky positioning shenanigans are necessary as opposed to using an
@@ -96,7 +96,7 @@ const Character: Component<CardProps> = (props) => {
             positioned, then DropMenu breaks because it relies on the nearest
             positioned parent to be the sitewide container */}
         <div
-          class="float-right mr-[3px] mt-[-195px] flex justify-end"
+          class="float-right mr-[3px] mt-[-295px] flex justify-end"
           onClick={() => setOpts(true)}
         >
           <div class="rounded-md border-[1px] border-[var(--bg-400)] bg-[var(--bg-700)] p-[2px]">

@@ -224,7 +224,7 @@ const EntryCard: Component<{
           isMultiline
           value={props.entry.entry}
           placeholder="Memory entry. E.g. {{user}} likes fruit and vegetables"
-          class="min-h-[64px] border-[1px]"
+          class="min-h-[300px] border-[1px]"
           required
           onKeyUp={(e) => {
             props.onChange({ ...props.entry, entry: e.currentTarget.value })

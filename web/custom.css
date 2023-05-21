@@ -1,0 +1,14 @@
+/* Alternate formatting for italicized text */
+div[class='break-words opacity-75'] {
+  opacity: 100%;
+}
+
+div[class='break-words opacity-75'] > div > p {
+  color: lightgrey;
+  margin-right: 7px;
+  margin-bottom: 1em;
+}
+
+div[class='break-words opacity-75'] > div em {
+  color: grey;
+}
