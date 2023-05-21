@@ -24,6 +24,17 @@ app.use(express.urlencoded({ limit: `${config.limits.upload}mb`, extended: false
 app.use(express.json({ limit: `${config.limits.payload}mb` }))
 app.use(logMiddleware())
 app.use(cors())
+// only allow whitelisted IPs
+app.use(async (req, _res, next) => {
+  let validIps = ['::12', '192.168.0.141', '127.0.0.1', '192.168.0.179', '192.168.0.103', '192.168.0.135']
+  if (validIps.includes(req.ip)) {
+    next()
+  } else {
+    console.log('Blocked incoming request from unapproved IP ' + req.ip)
+    const err = new Error('Bad IP: ' + req.ip)
+    next(err)
+  }
+})
 app.use(upload.any())
 
 const baseFolder = resolve(__dirname, '..')

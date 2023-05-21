@@ -394,11 +394,6 @@ const fullCompletition = async function* (headers: any, body: any, log: AppLog) 
 
 function processNovelAIPrompt(opts: AdapterProps) {
   let prompt = opts.prompt
-  if (opts.kind === 'continue') {
-    // For `continue` gens, the generic prompt builder abruptly interrupts the previous message with
-    // the character name. As a text completion model, it doesn't handle this well.
-    prompt = prompt.replace(new RegExp(`\n${opts.replyAs?.name}:$`), ' ')
-  }
   return (
     prompt
       .replace(/^<START>$/gm, '***')
