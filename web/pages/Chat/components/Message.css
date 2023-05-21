@@ -99,7 +99,7 @@ em {
   max-width: calc(100% - 16px - theme('width.12'));
 }
 .msg-with-3xl-avatar {
-  max-width: calc(100% - 16px - theme('width.16'));
+  /* max-width: calc(100% - 16px - theme('width.16')); */
 }
 
 @media (min-width: theme('screens.sm')) {
@@ -116,6 +116,6 @@ em {
     max-width: calc(100% - 16px - theme('width.20'));
   }
   .msg-with-3xl-avatar {
-    max-width: calc(100% - 16px - theme('width.24'));
+    max-width: calc(100% - 48px - theme('width.24'));
   }
 }

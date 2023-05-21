@@ -133,6 +133,7 @@ const InputBar: Component<{
     props.send(value, props.ooc, () => {
       ref.value = ''
       setText('')
+      updateText()
       setCleared(0)
       draft.clear()
     })
@@ -263,13 +264,12 @@ const InputBar: Component<{
             setComplete(true)
           }
 
-          const isMobileDevice = /Mobi/i.test(window.navigator.userAgent)
-          const canMobileSend = isMobileDevice ? user.ui.mobileSendOnEnter : true
-          if (ev.key === 'Enter' && !ev.shiftKey && canMobileSend) {
+          if (ev.key === 'Enter') {
             if (complete()) return
-            send()
-            ev.preventDefault()
+            if (ev.ctrlKey) return send()
+            return
           }
+          updateText()
         }}
         onInput={updateText}
       />
@@ -328,6 +328,9 @@ const InputBar: Component<{
           </Show>
           <Button schema="secondary" class="w-full" onClick={createImage} alignLeft>
             <ImagePlus size={18} /> Generate Image
+          </Button>
+          <Button schema="secondary" class="w-full" onClick={send} alignLeft>
+            <Send size={18} /> Send
           </Button>
           <Show when={!!state.lastMsg?.characterId && isOwner()}>
             <Button schema="secondary" class="w-full" onClick={respondAgain} alignLeft>
