@@ -107,11 +107,11 @@ export function getEndTokens(
   }
 
   if (char) {
-    baseEndTokens.push(`${char.name}:`, `${char.name} :`)
+    baseEndTokens.push(`\n${char.name}:`, `\n${char.name} :`)
   }
 
   for (const member of members) {
-    baseEndTokens.push(`${member.handle}:`, `${member.handle} :`)
+    baseEndTokens.push(`\n${member.handle}:`, `\n${member.handle} :`)
   }
 
   const uniqueTokens = Array.from(new Set(baseEndTokens))
