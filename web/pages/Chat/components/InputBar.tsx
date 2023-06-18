@@ -133,7 +133,6 @@ const InputBar: Component<{
     props.send(value, props.ooc, () => {
       ref.value = ''
       setText('')
-      updateText()
       setCleared(0)
       draft.clear()
     })
