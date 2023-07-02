@@ -124,7 +124,7 @@ export async function getMessages(chatId: string, before?: string) {
   let pageSize = PAGE_SIZE
   if (!before) {
     before = now()
-    pageSize = 100
+    pageSize = 10000
   }
 
   const docs = await db('chat-message')
