@@ -378,7 +378,7 @@ async function getPostInstruction(
     }
 
     case 'continue':
-      return { role: 'system', content: `${prefix}Continue ${opts.replyAs.name}'s response` }
+      return { role: 'system', content: `${prefix}Continue from where the previous reponse was interrupted` }
 
     case 'summary': {
       let content = opts.user.images?.summaryPrompt || IMAGE_SUMMARY_PROMPT.openai
@@ -406,7 +406,12 @@ async function getPostInstruction(
     case 'retry':
     case 'send':
     case 'request': {
-      return { role: 'system', content: `${prefix}${opts.replyAs.name}:` }
+      if (prefix) {
+        return { role: 'system', content: prefix.trim() }
+      } else {
+        return
+      }
+      //return { role: 'system', content: `${prefix}${opts.replyAs.name}:` }
     }
   }
 }
