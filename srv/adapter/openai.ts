@@ -118,6 +118,7 @@ export const handleOAI: ModelAdapter = async function* (opts) {
     }
 
     if (generated.value.error) {
+      log.error({ err: generated.value.error }, 'OpenAI request failed')
       yield generated.value
       return
     }
@@ -128,6 +129,8 @@ export const handleOAI: ModelAdapter = async function* (opts) {
       yield { partial: sanitiseAndTrim(accumulated, prompt, char, opts.characters, members) }
     }
   }
+  
+  log.debug({ response }, 'OpenAI response')
 
   try {
     let text = getCompletionContent(response, log)
