@@ -115,6 +115,7 @@ const Message: Component<MessageProps> = (props) => {
 
   const saveEdit = () => {
     if (!editRef) return
+    editRef.innerText = editRef.innerText.replace(/\n{3,}/g, '\n\n')
     msgStore.editMessage(props.msg._id, editRef.innerText)
     setEdit(false)
   }
