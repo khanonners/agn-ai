@@ -537,7 +537,7 @@ async function getGenerateProps(
 
     case 'continue': {
       if (!lastCharMsg?.characterId) throw new Error(`Cannot continue user message`)
-      props.continuing = lastMsg
+      props.continuing = { ...lastMsg, msg: lastMsg.msg.trim() }
       props.replyAs = getBot(lastCharMsg?.characterId)
       props.continue = lastCharMsg.msg
       if (opts.retry) {
