@@ -318,6 +318,11 @@ export const clioBadWordsId = [
   [26523],
   [41471],
   [2936],
+  // New as of Kayra v1
+  [85, 85],
+  [49332],
+  [7286],
+  [1115],
 ]
 
 export const penaltyWhitelist = [
