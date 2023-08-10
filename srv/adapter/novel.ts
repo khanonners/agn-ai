@@ -121,6 +121,19 @@ export const handleNovel: ModelAdapter = async function* ({
     for (const stop of all) {
       stops.push(stop)
     }
+    body.parameters.stop_sequences = stops
+
+    // NAI documentation says that if there is a `{{ text }}` block within the most bottom 1000
+    // tokens of the prompt, the Instruct module is used to better handle the instruction.
+    // As this is done by NovelAI's frontend and not the API, we need to do this ourselves.
+    const instructRegex = /{{ .* }}/g
+    const recentPrompt = processedPrompt.slice(-2000)
+    if (instructRegex.test(recentPrompt)) {
+      log.debug('Found instruct block near end of prompt, using Instruct module')
+      body.parameters.prefix = 'special_instruct'
+    } else {
+      body.parameters.prefix = opts.gen.temporary?.module || 'vanilla'
+    }
   }
 
   if (Array.isArray(opts.gen.order)) {
@@ -147,14 +160,13 @@ export const handleNovel: ModelAdapter = async function* ({
       input: null,
       parameters: {
         ...body.parameters,
-        bad_words_ids: null,
-        repetition_penalty_whitelist: null,
-        stop_sequences: null,
+        bad_words_ids: `truncated (${body.parameters.bad_words_ids.length})`,
+        repetition_penalty_whitelist: `truncated (${body.parameters.repetition_penalty_whitelist.length})`,
+        stop_sequences: `truncated (${body.parameters.stop_sequences.length})`,
       },
     },
     'NovelAI payload'
   )
-  log.debug(`Prompt:\n${body.input}`)
 
   const headers = {
     Authorization: `Bearer ${guest ? user.novelApiKey : decryptText(user.novelApiKey)}`,
@@ -190,6 +202,8 @@ export const handleNovel: ModelAdapter = async function* ({
   const parsed = sanitise(accum)
   const trimmed = trimResponseV2(parsed, opts.replyAs, members, opts.characters, endTokens)
 
+  log.debug({ parsed, trimmed }, 'NovelAI response')
+
   yield trimmed || parsed
 }
 
@@ -221,6 +235,26 @@ function getModernParams(gen: Partial<AppSchema.GenSettings>) {
     repetition_penalty_whitelist: penaltyWhitelist,
     mirostat_tau: gen.mirostatTau,
     mirotsat_lr: gen.mirostatLR,
+    // logit_bias_exp: [
+    //   {
+    //     bias: -0.15,
+    //     ensure_sequence_finish: false,
+    //     generate_once: true,
+    //     sequence: [85],
+    //   },
+    //   {
+    //     bias: -0.08,
+    //     ensure_sequence_finish: false,
+    //     generate_once: false,
+    //     sequence: [23],
+    //   },
+    //   {
+    //     bias: -0.08,
+    //     ensure_sequence_finish: false,
+    //     generate_once: false,
+    //     sequence: [21],
+    //   },
+    // ],
   }
 
   if (gen.cfgScale) {
