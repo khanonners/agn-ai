@@ -370,10 +370,12 @@ export const generateMessageV2 = handle(async (req, res) => {
     case 'send-event:character':
     case 'send-event:hidden':
     case 'send': {
+      const characterId = body.kind === 'self' ? body.impersonate?._id : replyAs._id
+
       const msg = await store.msgs.createChatMessage({
         _id: requestId,
         chatId,
-        characterId: replyAs._id,
+        characterId,
         senderId: body.kind === 'self' ? userId : undefined,
         message: responseText,
         adapter,

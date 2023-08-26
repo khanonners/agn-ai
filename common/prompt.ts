@@ -400,7 +400,11 @@ export async function buildPromptParts(
     parts.greeting = replace(char.greeting)
   }
 
-  const post = createPostPrompt(opts)
+  // For kind === 'self', the replyAs character is the user's character
+  // TODO: this only works for text completion models, as chat models enforce a User/AI role split
+  // for chat models, we must somehow tell the AI role to impersonate the user's character
+  const replyAsName = opts.kind === 'self' ? sender : replyAs.name
+  const post = createPostPrompt({ ...opts, replyAs: { ...replyAs, name: replyAsName } })
 
   if (opts.continue) {
     post.unshift(`${char.name}: ${opts.continue}`)

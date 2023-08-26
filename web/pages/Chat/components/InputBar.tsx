@@ -1,4 +1,4 @@
-import { ImagePlus, Megaphone, MoreHorizontal, PlusCircle, Send, Zap } from 'lucide-solid'
+import { ImagePlus, Megaphone, MoreHorizontal, PlusCircle, Send, Zap, User } from 'lucide-solid'
 import {
   Component,
   createMemo,
@@ -147,6 +147,10 @@ const InputBar: Component<{
     msgStore.request(props.chat._id, props.chat.characterId)
   }
 
+  const respondSelf = () => {
+    msgStore.selfGenerate()
+  }
+
   const more = () => {
     props.more(state.lastMsg.msg)
     setMenu(false)
@@ -281,10 +285,10 @@ const InputBar: Component<{
 
       <DropMenu show={menu()} close={() => setMenu(false)} vert="up" horz="left">
         <div class="flex w-48 flex-col gap-2 p-2">
-          {/* <Button schema="secondary" class="w-full" onClick={generateSelf} alignLeft>
-              <MessageCircle size={18} />
-              Respond as Me
-            </Button> */}
+          <Button schema="secondary" class="w-full" onClick={respondSelf} alignLeft>
+            <User size={18} />
+            Respond as Me
+          </Button>
           <Show when={ctx.activeBots.length > 1}>
             <div>Auto-reply</div>
             <Button
