@@ -250,7 +250,12 @@ export const generateMessageV2 = handle(async (req, res) => {
       }
 
       if ('partial' in gen) {
-        const prefix = body.kind === 'continue' ? `${body.continuing.msg} ` : ''
+        // TODO: figure out when to add trailing space before a continuation
+        // For text completion models, the model should emit a leading space if it wants one. But if
+        // we are doing trimming of responses, we may need to add a space here.
+        // For chat completion models, each message is trimmed and mid-word/mid-sentence completions
+        // are not often generated.
+        const prefix = body.kind === 'continue' ? `${body.continuing.msg}` : ''
         sendMany(members, {
           type: 'message-partial',
           partial: `${prefix}${gen.partial}`,
