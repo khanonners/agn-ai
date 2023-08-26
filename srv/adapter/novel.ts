@@ -276,6 +276,25 @@ function getModernParams(gen: Partial<AppSchema.GenSettings>) {
     // ],
   }
 
+  // NAI frontend seems to completely omit disabled samplers from the payload. I don't know if this
+  // actually affects the generation, but we'll do it anyway for consistency.
+  if (gen.disabledSamplers?.length) {
+    gen.disabledSamplers.forEach((sampler) => {
+      if (sampler === 0) delete payload.temperature
+      if (sampler === 1) delete payload.top_k
+      if (sampler === 2) delete payload.top_p
+      if (sampler === 3) delete payload.tail_free_sampling
+      if (sampler === 4) delete payload.top_a
+      if (sampler === 5) delete payload.typical_p
+      if (sampler === 6) {
+        delete payload.cfg_scale
+        delete payload.cfg_uc
+      }
+      if (sampler === 7) delete payload.top_g
+      if (sampler === 8) delete payload.mirostat_tau
+    })
+  }
+
   if (gen.cfgScale) {
     payload.cfg_scale = gen.cfgScale
     payload.cfg_uc = gen.cfgOppose || ''
