@@ -2,11 +2,12 @@ import { Download } from 'lucide-solid'
 import { Component, createMemo } from 'solid-js'
 import Button from '../../shared/Button'
 import Modal from '../../shared/Modal'
-import { chatStore, msgStore } from '../../store'
+import { characterStore, chatStore, msgStore } from '../../store'
 
 const ChatExport: Component<{ show: boolean; close: () => void }> = (props) => {
   const chats = chatStore()
   const msgs = msgStore()
+  const characters = characterStore()
 
   const json = createMemo(() => {
     const chat = chats.active?.chat
@@ -17,13 +18,28 @@ const ChatExport: Component<{ show: boolean; close: () => void }> = (props) => {
       greeting: chat?.greeting || '',
       sampleChat: chat?.sampleChat || '',
       scenario: chat?.scenario || '',
-      messages: messages.map((msg) => ({
-        handle: msg.userId ? chats.memberIds[msg.userId]?.handle || 'You' : undefined,
-        userId: msg.userId ? msg.userId : undefined,
-        characterId: msg.characterId ? 'imported' : undefined,
-        msg: msg.msg,
-        state: msg.state,
-      })),
+      messages: messages.map((msg) => {
+        let handle = msg.userId ? chats.memberIds[msg.userId]?.handle || 'You' : undefined
+        let userId = msg.userId ? msg.userId : undefined
+        let characterId = msg.characterId ? msg.characterId : undefined
+
+        if (characters.impersonating && msg.userId) {
+          console.log('setting user message data to impersonated character', {
+            msg,
+            imp: characters.impersonating,
+          })
+          handle = characters.impersonating.name
+          characterId = characters.impersonating._id
+        }
+
+        return {
+          handle,
+          userId,
+          characterId,
+          msg: msg.msg,
+          state: msg.state,
+        }
+      }),
     }
 
     return encodeURIComponent(JSON.stringify(json, null, 2))

@@ -102,9 +102,9 @@ export const importChat = handle(async ({ body, userId }) => {
     chatId: chat._id,
     message: msg.msg,
     adapter: 'import',
-    characterId: msg.characterId ? character._id : undefined,
+    characterId: msg.characterId ? msg.characterId : undefined,
     senderId: msg.userId ? msg.userId : undefined,
-    handle: msg.handle,
+    handle: undefined,
     ooc: msg.ooc ?? false,
     event: undefined,
   }))
