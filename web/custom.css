@@ -12,3 +12,9 @@ div[class='break-words opacity-75'] > div > p {
 div[class='break-words opacity-75'] > div em {
   color: grey;
 }
+
+.rendered-markdown br {
+  content: " ";
+  display: block;
+  margin: 0.25em 0;
+}
