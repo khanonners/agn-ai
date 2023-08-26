@@ -122,7 +122,7 @@ export const handleNovel: ModelAdapter = async function* ({
     const added = new Set<string>()
 
     for (const [, char] of Object.entries(opts.characters || {})) {
-      if (added.has(char._id) || char._id === opts.replyAs?._id) continue
+      if (added.has(char._id)) continue
       added.add(char._id)
       const tokens = encode(`\n${char.name}:`)
       stops.push(tokens)
