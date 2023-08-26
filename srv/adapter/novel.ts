@@ -388,7 +388,12 @@ const fullCompletition = async function* (headers: any, body: any, log: AppLog) 
 }
 
 function processNovelAIPrompt(prompt: string) {
-  return prompt.replace(/^\<START\>$/gm, '***').replace(/\n\n+/gi, '\n\n')
+  return (
+    prompt
+      .replace(/^\<START\>$/gm, '***')
+      // NAI models do not like consecutive new lines and their docs/frontend suggest removing them
+      .replace(/\n{2,}/g, '\n')
+  )
 }
 
 function getBaseUrl(model: string) {
