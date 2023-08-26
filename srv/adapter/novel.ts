@@ -171,6 +171,13 @@ export const handleNovel: ModelAdapter = async function* ({
 
   yield { prompt: body.input }
 
+  log.debug({ prompt: body.input }, 'NovelAI prompt')
+
+  const encoded = tokenizeAndEncodePrompt(body.input, model)
+  body.input = encoded
+
+  // log.debug({ encoded }, 'NovelAI encoded prompt')
+
   const endTokens = ['***', 'Scenario:', '----', '⁂']
 
   log.debug(
@@ -236,6 +243,7 @@ function getModernParams(gen: Partial<AppSchema.GenSettings>) {
     top_k: gen.topK,
     top_p: gen.topP,
     top_a: gen.topA,
+    num_logprobs: 4,
     typical_p: gen.typicalP,
     tail_free_sampling: gen.tailFreeSampling,
     repetition_penalty: gen.repetitionPenalty,
@@ -245,7 +253,8 @@ function getModernParams(gen: Partial<AppSchema.GenSettings>) {
     repetition_penalty_presence: gen.presencePenalty,
     generate_until_sentence: true,
     use_cache: false,
-    use_string: true,
+    // use_string: true,
+    use_string: false, // requires encoding/decoding prompts as uint16 arrays of tokenids
     return_full_text: false,
     prefix: module,
     phrase_rep_pen: gen.phraseRepPenalty || 'aggressive',
@@ -332,14 +341,21 @@ const streamCompletion = async function* (headers: any, body: any, _log: AppLog)
         final: boolean
         ptr: number
         error?: string
+        logprobs: NAILogprobsPayload
       }
 
       if (data.error) {
         yield { error: `NovelAI streaming request failed: ${data.error}` }
         return
       }
-      tokens.push(data.token)
-      yield { token: data.token }
+
+      const decoded = decodeAndDetokenizeChunk(data.token, body.model)
+      // const logprobs = logprobsToPercentages(data.logprobs)
+      // console.log('logprobs', JSON.stringify(data.logprobs))
+      // console.log('data', { ...data, logprobs: null, decoded })
+      // console.log('probs', logprobs)
+      tokens.push(decoded)
+      yield { token: decoded }
     }
   } catch (err: any) {
     yield { error: `NovelAI streaming request failed: ${err.message || err}` }
@@ -401,4 +417,47 @@ function getBaseUrl(model: string) {
   const url = model.split('/').slice(0, -1).join('/')
   if (url.toLowerCase().startsWith('http')) return url
   return `https://${url}`
+}
+
+function tokenizeAndEncodePrompt(prompt: string, model: string) {
+  const encoder = getEncoder('novel', model)
+  const tokens = encoder.encode(prompt)
+
+  const buffer = new ArrayBuffer(tokens.length * 2)
+  const view = new DataView(buffer)
+  tokens.forEach((token, i) => view.setUint16(i * 2, token, true))
+
+  const bytes = new Uint8Array(buffer)
+  const base64 = Buffer.from(bytes).toString('base64')
+  return base64
+}
+
+function decodeAndDetokenizeChunk(chunk: string, model: string) {
+  const encoder = getEncoder('novel', model)
+
+  const buffer = Buffer.from(chunk, 'base64')
+  const uint8Array = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.length)
+  const view = new DataView(uint8Array.buffer, uint8Array.byteOffset, uint8Array.byteLength)
+
+  return encoder.decode(
+    Array.from({ length: uint8Array.length / 2 }, (_, i) => view.getUint16(i * 2, true))
+  )
+}
+
+type NAILogprobsPayload = {
+  chosen: Array<[number[], number[]]>
+  before: Array<[number[], number[]]>
+  after: Array<[number[], number[]]>
+}
+
+function logprobsToPercentages(logprobs: NAILogprobsPayload) {
+  const encoder = getEncoder('novel', 'kayra_v1')
+  const after = logprobs.after.map(([token, [logprob]]) => ({ token, logprob: Math.exp(logprob) }))
+  const afterTotal = after.reduce((total, { logprob }) => total + logprob, 0)
+  const afterPercentages = after.map(({ token, logprob }) => ({
+    token,
+    text: encoder.decode(token),
+    logprob: logprob / afterTotal,
+  }))
+  return afterPercentages
 }
