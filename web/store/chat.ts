@@ -529,6 +529,8 @@ export const chatStore = createStore<ChatState>('chat', {
         ? entities.chat.tempCharacters![active.replyAs]
         : entities.characters[active.replyAs!] || active.char
 
+      const { impersonating } = getStore('character').getState()
+
       const resolvedScenario = resolveScenario(
         entities.chat,
         entities.char,
@@ -538,6 +540,7 @@ export const chatStore = createStore<ChatState>('chat', {
       const prompt = await createPromptParts(
         {
           ...entities,
+          impersonate: impersonating,
           lastMessage: entities.lastMessage?.date || '',
           replyAs,
           sender: entities.profile,
