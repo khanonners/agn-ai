@@ -209,6 +209,7 @@ export type GenerateOpts =
   | { kind: 'send-event:character'; text: string }
   | { kind: 'send-event:hidden'; text: string }
   | { kind: 'send-noreply'; text: string }
+  | { kind: 'send-noreply:bot'; text: string }
   | { kind: 'ooc'; text: string }
   /**
    * A user request a message from a character
@@ -269,7 +270,7 @@ export async function generateResponse(opts: GenerateOpts) {
     })
   }
 
-  if (opts.kind === 'ooc' || opts.kind === 'send-noreply') {
+  if (opts.kind === 'ooc' || opts.kind === 'send-noreply' || opts.kind === 'send-noreply:bot') {
     return createMessage(active.chat._id, opts)
   }
 
@@ -622,13 +623,22 @@ async function getGenerateProps(
 /**
  * Create a user message that does not generate a bot response
  */
-async function createMessage(chatId: string, opts: { kind: 'ooc' | 'send-noreply'; text: string }) {
+async function createMessage(
+  chatId: string,
+  opts: { kind: 'ooc' | 'send-noreply' | 'send-noreply:bot'; text: string }
+) {
   const { impersonating } = getStore('character').getState()
   const impersonate = opts.kind === 'send-noreply' ? impersonating : undefined
+
+  // If creating an no-reply message for a bot, we need to figure out the character to send as.
+  const { entities } = await getActivePromptOptions({ kind: "send", text: "" });
+  const activeReplyAs = entities.autoReplyAs || entities.char._id;
+  const replyAs = opts.kind === 'send-noreply:bot' ? activeReplyAs : undefined;
   return api.post<{ requestId: string }>(`/chat/${chatId}/send`, {
     text: opts.text,
     kind: opts.kind,
     impersonate,
+    replyAs: { _id: replyAs },
   })
 }
 

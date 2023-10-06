@@ -16,9 +16,10 @@ import { getTokenCounter } from '/srv/tokenize'
 type GenRequest = UnwrapBody<typeof genValidator>
 
 const sendValidator = {
-  kind: ['send-noreply', 'ooc'],
+  kind: ['send-noreply', 'send-noreply:bot', 'ooc'],
   text: 'string',
   impersonate: 'any?',
+  replyAs: 'any?',
 } as const
 
 const genValidator = {
@@ -28,6 +29,7 @@ const genValidator = {
     'send-event:world',
     'send-event:character',
     'send-event:hidden',
+    'send-noreply:bot',
     'ooc',
     'retry',
     'continue',
@@ -81,7 +83,28 @@ export const createMessage = handle(async (req) => {
 
   const impersonate: AppSchema.Character | undefined = body.impersonate
 
-  if (!userId) {
+  if (body.kind === 'send-noreply:bot') {
+    console.log('send-noreply:bot')
+    // This creates a new bot message without generating a response. Can be used to let users
+    // skip a bot's generation and write the turn themselves.
+    const chat = await store.chats.getChatOnly(chatId)
+    if (!chat) throw errors.NotFound
+    const members = chat.memberIds.concat(chat.userId)
+
+    await ensureBotMembership(chat, members, impersonate)
+    const newMsg = await store.msgs.createChatMessage({
+      chatId,
+      characterId: body.replyAs?._id,
+      senderId: undefined,
+      message: '?',
+      adapter: 'empty-message',
+      ooc: false,
+      actions: [],
+      meta: {},
+      event: undefined,
+    })
+    sendMany(members, { type: 'message-created', msg: newMsg, chatId })
+  } else if (!userId) {
     const guest = req.socketId
     const newMsg = newMessage(v4(), chatId, body.text, {
       userId: impersonate ? undefined : 'anon',

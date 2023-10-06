@@ -36,6 +36,7 @@ type SendModes =
   | 'retry'
   | 'self'
   | 'send-noreply'
+  | 'send-noreply:bot'
 
 type ChatMessageExt = AppSchema.ChatMessage & { voiceUrl?: string }
 
@@ -379,6 +380,7 @@ export const msgStore = createStore<MsgState>(
 
         case 'ooc':
         case 'send-noreply':
+        case 'send-noreply:bot':
           res = await msgsApi.generateResponse({ kind: mode, text: message })
           yield { partial: undefined, waiting: undefined }
           break

@@ -1,4 +1,4 @@
-import { ImagePlus, Megaphone, MoreHorizontal, PlusCircle, Send, Zap, User } from 'lucide-solid'
+import { ImagePlus, Megaphone, MoreHorizontal, PlusCircle, Send, Zap, User, PlusSquare } from 'lucide-solid'
 import {
   Component,
   createMemo,
@@ -151,6 +151,14 @@ const InputBar: Component<{
     msgStore.selfGenerate()
   }
 
+  const insertEmptySelf = () => {
+    msgStore.send(props.chat._id, '-', 'send-noreply')
+  }
+
+  const insertEmptyBot = () => {
+    msgStore.send(props.chat._id, '-', 'send-noreply:bot')
+  }
+
   const more = () => {
     props.more(state.lastMsg.msg)
     setMenu(false)
@@ -288,6 +296,14 @@ const InputBar: Component<{
           <Button schema="secondary" class="w-full" onClick={respondSelf} alignLeft>
             <User size={18} />
             Respond as Me
+          </Button>
+          <Button schema="secondary" class="w-full" onClick={insertEmptyBot} alignLeft>
+            <PlusSquare size={18} />
+            New Message (Bot)
+          </Button>
+          <Button schema="secondary" class="w-full" onClick={insertEmptySelf} alignLeft>
+            <PlusSquare size={18} />
+            New Message (Self)
           </Button>
           <Show when={ctx.activeBots.length > 1}>
             <div>Auto-reply</div>
