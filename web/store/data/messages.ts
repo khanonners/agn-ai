@@ -542,7 +542,7 @@ async function getGenerateProps(
       props.continue = lastCharMsg.msg
       if (opts.retry) {
         const msgState = msgStore()
-        props.continuing = { ...lastMsg, msg: msgState.textBeforeGenMore ?? lastMsg.msg }
+        props.continuing = { ...lastMsg, msg: (msgState.textBeforeGenMore ?? lastMsg.msg).trim() }
         props.continue = msgState.textBeforeGenMore ?? lastMsg.msg
         props.messages = [
           ...props.messages.slice(0, props.messages.length - 1),

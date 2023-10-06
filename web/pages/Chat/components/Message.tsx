@@ -418,6 +418,7 @@ const MessageOptions: Component<{
   textBeforeGenMore?: string
   onRemove: () => void
 }> = (props) => {
+  const msgState = msgStore()
   return (
     <div class="flex items-center gap-3 text-sm">
       <Show when={props.chatEditing && props.msg.characterId && props.msg.adapter !== 'image'}>
