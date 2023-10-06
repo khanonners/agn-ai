@@ -378,7 +378,10 @@ async function getPostInstruction(
     }
 
     case 'continue':
-      return { role: 'system', content: `${prefix}Continue from where the previous reponse was interrupted` }
+      return {
+        role: 'system',
+        content: `${prefix}\nContinue from where the previous message was interrupted.`,
+      }
 
     case 'summary': {
       let content = opts.user.images?.summaryPrompt || IMAGE_SUMMARY_PROMPT.openai
