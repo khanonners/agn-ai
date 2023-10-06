@@ -2,8 +2,8 @@ import needle from 'needle'
 import { decryptText } from '../db/util'
 import { sanitise, sanitiseAndTrim, trimResponseV2 } from '../api/chat/common'
 import { badWordIds, clioBadWordsId, penaltyWhitelist } from './novel-bad-words'
-import { ModelAdapter } from './type'
-import { AppSchema } from '../../common/types/schema'
+import { AdapterProps, ModelAdapter } from './type'
+import { AppSchema } from '/common/types'
 import { NOVEL_MODELS } from '/common/adapters'
 import { requestStream } from './stream'
 import { AppLog } from '../logger'
@@ -49,16 +49,8 @@ const NEW_PARAMS: Record<string, boolean> = {
   [NOVEL_MODELS.kayra_v1]: true,
 }
 
-export const handleNovel: ModelAdapter = async function* ({
-  char,
-  members,
-  user,
-  prompt,
-  mappedSettings,
-  guest,
-  log,
-  ...opts
-}) {
+export const handleNovel: ModelAdapter = async function* (opts) {
+  const { members, user, prompt, mappedSettings, guest, log } = opts
   if (!user.novelApiKey) {
     yield { error: 'Novel API key not set' }
     return
@@ -74,7 +66,7 @@ export const handleNovel: ModelAdapter = async function* ({
 
   const model = opts.gen.novelModel || user.novelModel || NOVEL_MODELS.clio_v1
 
-  const processedPrompt = processNovelAIPrompt(prompt)
+  const processedPrompt = processNovelAIPrompt(opts)
 
   const body = {
     model,
@@ -136,7 +128,9 @@ export const handleNovel: ModelAdapter = async function* ({
     }
 
     body.parameters.logit_bias_exp = biases
-    const all = ['***', 'Scenario:', '----', '⁂'].concat(opts.gen.stopSequences || []).map(encode)
+    const all = ['***', 'Scenario:', '----', '⁂', '{{']
+      .concat(opts.gen.stopSequences || [])
+      .map(encode)
     for (const stop of all) {
       stops.push(stop)
     }
@@ -173,10 +167,7 @@ export const handleNovel: ModelAdapter = async function* ({
 
   log.debug({ prompt: body.input }, 'NovelAI prompt')
 
-  const encoded = tokenizeAndEncodePrompt(body.input, model)
-  body.input = encoded
-
-  // log.debug({ encoded }, 'NovelAI encoded prompt')
+  body.input = tokenizeAndEncodePrompt(body.input, model)
 
   const endTokens = ['***', 'Scenario:', '----', '⁂']
 
@@ -188,12 +179,10 @@ export const handleNovel: ModelAdapter = async function* ({
         ...body.parameters,
         bad_words_ids: `truncated (${body.parameters.bad_words_ids.length})`,
         repetition_penalty_whitelist: `truncated (${body.parameters.repetition_penalty_whitelist.length})`,
-        stop_sequences: `truncated (${body.parameters.stop_sequences.length})`,
       },
     },
     'NovelAI payload'
   )
-
   const headers = {
     Authorization: `Bearer ${guest ? user.novelApiKey : decryptText(user.novelApiKey)}`,
   }
@@ -403,10 +392,16 @@ const fullCompletition = async function* (headers: any, body: any, log: AppLog) 
   return { tokens: res.body.output }
 }
 
-function processNovelAIPrompt(prompt: string) {
+function processNovelAIPrompt(opts: AdapterProps) {
+  let prompt = opts.prompt
+  if (opts.kind === 'continue') {
+    // For `continue` gens, the generic prompt builder abruptly interrupts the previous message with
+    // the character name. As a text completion model, it doesn't handle this well.
+    prompt = prompt.replace(new RegExp(`\n${opts.replyAs?.name}:$`), ' ')
+  }
   return (
     prompt
-      .replace(/^\<START\>$/gm, '***')
+      .replace(/^<START>$/gm, '***')
       // NAI models do not like consecutive new lines and their docs/frontend suggest removing them
       .replace(/\n{2,}/g, '\n')
   )
@@ -428,8 +423,7 @@ function tokenizeAndEncodePrompt(prompt: string, model: string) {
   tokens.forEach((token, i) => view.setUint16(i * 2, token, true))
 
   const bytes = new Uint8Array(buffer)
-  const base64 = Buffer.from(bytes).toString('base64')
-  return base64
+  return Buffer.from(bytes).toString('base64')
 }
 
 function decodeAndDetokenizeChunk(chunk: string, model: string) {
@@ -450,14 +444,14 @@ type NAILogprobsPayload = {
   after: Array<[number[], number[]]>
 }
 
-function logprobsToPercentages(logprobs: NAILogprobsPayload) {
-  const encoder = getEncoder('novel', 'kayra_v1')
-  const after = logprobs.after.map(([token, [logprob]]) => ({ token, logprob: Math.exp(logprob) }))
-  const afterTotal = after.reduce((total, { logprob }) => total + logprob, 0)
-  const afterPercentages = after.map(({ token, logprob }) => ({
-    token,
-    text: encoder.decode(token),
-    logprob: logprob / afterTotal,
-  }))
-  return afterPercentages
-}
+// function logprobsToPercentages(logprobs: NAILogprobsPayload) {
+//   const encoder = getEncoder('novel', 'kayra_v1')
+//   const after = logprobs.after.map(([token, [logprob]]) => ({ token, logprob: Math.exp(logprob) }))
+//   const afterTotal = after.reduce((total, { logprob }) => total + logprob, 0)
+//   const afterPercentages = after.map(({ token, logprob }) => ({
+//     token,
+//     text: encoder.decode(token),
+//     logprob: logprob / afterTotal,
+//   }))
+//   return afterPercentages
+// }
