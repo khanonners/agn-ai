@@ -22,6 +22,7 @@ import { replace } from '/common/util'
 import { toMap } from '/web/shared/util'
 import { getServiceTempConfig, getUserPreset } from '/web/shared/adapter'
 import { msgStore } from '../message'
+import { presetStore } from '/web/store'
 import { embedApi } from '../embeddings'
 
 export type PromptEntities = {
@@ -230,10 +231,42 @@ export type GenerateOpts =
   | { kind: 'summary' }
 
 export async function generateResponse(opts: GenerateOpts) {
-  const { active } = chatStore.getState()
+  let { active } = chatStore.getState()
 
   if (!active) {
     return localApi.error('No active chat. Try refreshing.')
+  }
+
+  if (opts.kind === 'self') {
+    console.log('Generating self message')
+    // hack to switch to NovelAI gen preset when generating a self-message. involves temporarily
+    // switching the chat's preset to the NovelAI one, then switching it back after generating.
+
+    console.log('Switching to NovelAI preset for self-message')
+    const { presets } = presetStore.getState()
+    const novelaiPreset = presets.find((p) => p.name === 'Kayra - Pro Writer v1.1')
+    const activePreset = active.chat.genPreset
+
+    if (!novelaiPreset) throw new Error('Could not find NovelAI preset')
+    if (!activePreset) throw new Error('Could not find active preset')
+
+    await new Promise<void>((resolve) => {
+      chatStore.editChatGenPreset(active!.chat._id, novelaiPreset._id, resolve)
+    })
+    console.log('Switched to NovelAI preset')
+
+    setTimeout(() => {
+      chatStore.editChatGenPreset(active!.chat._id, activePreset)
+      console.log('Switched back to original preset')
+    }, 500)
+
+    // state needs to be re-fetched after switching presets
+    await new Promise<void>((resolve) => {
+      setTimeout(() => {
+        active = chatStore.getState().active
+        resolve()
+      }, 100)
+    })
   }
 
   if (opts.kind === 'ooc' || opts.kind === 'send-noreply') {
