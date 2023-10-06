@@ -27,23 +27,18 @@ export function requestStream(stream: NodeJS.ReadableStream) {
     emitter.done()
   })
 
-  let incomplete = ''
+  let partial = ''
 
   stream.on('data', (chunk: Buffer) => {
-    const data = incomplete + chunk.toString()
-    incomplete = ''
-    const messages = data.split(/\r?\n\r?\n/)
+    const data = chunk.toString()
+    const messages = (partial + data).split(/\r?\n\r?\n/)
+
+    partial = messages.pop() || ''
 
     for (const msg of messages) {
       const event: any = parseEvent(msg)
 
       if (!event.data) {
-        continue
-      }
-
-      const data: string = event.data
-      if (typeof data === 'string' && data.startsWith('{') && !data.endsWith('}')) {
-        incomplete = msg
         continue
       }
 
