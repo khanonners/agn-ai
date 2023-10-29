@@ -110,6 +110,9 @@ function toEmptyTagCounts(acc: Record<string, number>, tag: string) {
 function sortTags(a: TagOption, b: TagOption) {
   if (a.tag === 'archived') return 1
   if (b.tag === 'archived') return -1
-  if (a.count !== b.count) return b.count - a.count
+  // namespaced tags first
+  if (a.tag.includes(':') && !b.tag.includes(':')) return -1
+  if (!a.tag.includes(':') && b.tag.includes(':')) return 1
+  // if (a.count !== b.count) return b.count - a.count
   return a.tag.localeCompare(b.tag)
 }
