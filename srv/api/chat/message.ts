@@ -243,7 +243,7 @@ export const generateMessageV2 = handle(async (req, res) => {
     chatId,
     mode: body.kind,
     senderId: userId,
-    characterId: replyAs._id,
+    characterId: (body.kind === 'self' ? impersonate?._id : null) ?? replyAs._id,
   })
   res.json({ requestId, success: true, generating: true, message: 'Generating message' })
 

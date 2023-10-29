@@ -198,7 +198,7 @@ const ChatDetail: Component = () => {
 
     return emptyMsg({
       id: 'partial',
-      charId: msgs.waiting?.mode !== 'self' ? msgs.waiting.characterId : undefined,
+      charId: msgs.waiting.characterId,
       userId: msgs.waiting?.mode === 'self' ? msgs.waiting.userId || user.user?._id : undefined,
       message: msgs.partial || '',
       adapter: 'partial',
