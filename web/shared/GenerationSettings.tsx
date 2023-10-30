@@ -263,6 +263,16 @@ const GeneralSettings: Component<
             aiSetting="thirdPartyUrl"
           />
         </div>
+        <TextInput
+          fieldName="thirdPartyPassword"
+          label="Third Party Password"
+          helperText="Applies only to this preset"
+          placeholder={props.inherit?.thirdPartyPassword ? '********' : ''}
+          type="password"
+          value={''}
+          disabled={props.disabled}
+          service={props.service}
+        />
       </Card>
 
       <Card
@@ -1171,6 +1181,7 @@ export function getPresetFormData(ref: any) {
   } = getStrictForm(ref, {
     ...presetValidator,
     thirdPartyFormat: [...THIRDPARTY_FORMATS, ''],
+    thirdPartyPassword: 'string?',
     useAdvancedPrompt: 'string?',
     promptOrderFormat: 'string?',
     promptOrder: 'string?',

@@ -245,6 +245,11 @@ export async function createTextStreamV2(
     opts.user.koboldUrl = opts.settings.thirdPartyUrl
   }
 
+  if (opts.settings?.thirdPartyPassword) {
+    opts.user.thirdPartyPassword = opts.settings.thirdPartyPassword
+    opts.user.thirdPartyPasswordSet = true
+  }
+
   if (opts.settings?.thirdPartyFormat) {
     opts.user.thirdPartyFormat = opts.settings.thirdPartyFormat
   }

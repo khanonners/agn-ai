@@ -521,6 +521,7 @@ export namespace AppSchema {
     thirdPartyUrl?: string
     thirdPartyFormat?: ThirdPartyFormat
     thirdPartyUrlNoSuffix?: boolean
+    thirdPartyPassword?: string
     thirdPartyModel?: string
     thirdPartyKey?: string
 

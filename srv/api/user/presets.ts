@@ -4,6 +4,7 @@ import { store } from '../../db'
 import { errors, handle } from '../wrap'
 import { AIAdapter } from '../../../common/adapters'
 import { AppSchema } from '/common/types'
+import { encryptText } from '/srv/db/util'
 
 const createPreset = {
   ...presetValidator,
@@ -59,6 +60,12 @@ export const updateUserPreset = handle(async ({ params, body, userId }) => {
   if (body.novelModelOverride) {
     body.novelModel = body.novelModelOverride
     delete body.novelModelOverride
+  }
+
+  if (body.thirdPartyPassword && body.thirdPartyPassword.trim().length) {
+    body.thirdPartyPassword = encryptText(body.thirdPartyPassword);
+  } else {
+    delete body.thirdPartyPassword;
   }
 
   const { order, disabledSamplers, ...rest } = body
