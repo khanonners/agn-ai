@@ -249,15 +249,24 @@ export async function toChatCompletionPayload(
 
     const line = all[i]
 
-    const obj: CompletionItem = {
-      role: 'assistant',
-      content: line.trim().replace(BOT_REPLACE, replyAs.name).replace(SELF_REPLACE, handle),
-    }
-
     const isSystem = line.startsWith('System:')
     const isUser = line.startsWith(handle)
     const isBot = !isUser && !isSystem
 
+    const nameInLine: string | undefined = line.split(':')[0]
+    const name = isBot ? nameInLine ?? replyAs.name : isUser ? handle : undefined
+
+    const content = line
+      .trim()
+      .replace(BOT_REPLACE, replyAs.name)
+      .replace(SELF_REPLACE, handle)
+      .replace(name ? `${name}: ` : '', '')
+
+    const obj: CompletionItem = {
+      role: 'assistant',
+      content,
+      name,
+    }
     const insert = inserts.get(distanceFromBottom)
     if (insert) history.push({ role: 'system', content: insert })
 
@@ -291,7 +300,8 @@ export async function toChatCompletionPayload(
       obj.role = 'user'
     }
 
-    const length = await encoder()(obj.content)
+    const nameCost = obj.name ? 1 + (await encoder()(obj.name)) : 0
+    const length = nameCost + (await encoder()(obj.content))
     if (tokens + length > maxBudget) {
       --i
       break
@@ -339,12 +349,16 @@ export async function splitSampleChat(opts: SplitSampleChatProps) {
       ? 'user'
       : 'system'
 
-    const msg: CompletionItem = {
-      role: role,
-      content: sample.replace(BOT_REPLACE, char).replace(SELF_REPLACE, sender),
-    }
+    const name = role === 'assistant' ? char : role === 'user' ? sender : undefined
 
-    const length = await encoder()(msg.content)
+    const content = sample
+      .replace(BOT_REPLACE, char)
+      .replace(SELF_REPLACE, sender)
+      .replace(name ? `${name}: ` : '', '')
+
+    const msg: CompletionItem = { role, content, name }
+    const nameCost = msg.name ? 1 + (await encoder()(msg.name)) : 0
+    const length = nameCost + (await encoder()(msg.content))
     if (budget && tokens + length > budget) break
 
     additions.push(msg)
