@@ -89,6 +89,7 @@
     "express": "^4.18.2",
     "gpt-3-encoder": "^1.1.4",
     "jsonwebtoken": "^9.0.0",
+    "jszip": "^3.10.1",
     "localtunnel": "^2.0.2",
     "minimist": "^1.2.8",
     "mkdirp": "^2.1.4",

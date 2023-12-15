@@ -7,7 +7,7 @@ import { Save, X } from 'lucide-solid'
 import { exportCharacter } from '/common/characters'
 import { charsApi } from '/web/store/data/chars'
 import { toastStore } from '/web/store'
-import { downloadCharCard } from './util'
+import { downloadAllCharCardsAsZip, downloadCharCard } from './util'
 
 type CharacterFileType = 'png' | 'json'
 
@@ -127,6 +127,9 @@ export const DownloadModal: Component<{
                 onClick={() => downloadCharCard(props.char || props.charId, format(), schema())}
               >
                 <Save /> Download (PNG)
+              </Button>
+              <Button onClick={() => downloadAllCharCardsAsZip(format(), schema())}>
+                Download All (ZIP)
               </Button>
             </Match>
           </Switch>

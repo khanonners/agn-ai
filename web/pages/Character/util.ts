@@ -1,6 +1,6 @@
 import { AppSchema } from '/common/types'
 import { getAssetUrl, storage } from '/web/shared/util'
-import { toastStore } from '/web/store'
+import { characterStore, toastStore } from '/web/store'
 import { ALLOWED_TYPES, charsApi, getImageData } from '/web/store/data/chars'
 import { exportCharacter } from '/common/characters'
 import text from 'png-chunk-text'
@@ -157,6 +157,66 @@ export async function convertCharToJSON(
     const json = charToJson(char, format, schema)
     return `data:text/json:charset=utf-8,${encodeURIComponent(json)}`
   }
+}
+
+import JSZip from 'jszip'
+
+export async function downloadAllCharCardsAsZip(format: string, schema: string) {
+  const chars = characterStore((s) => ({
+    allBots: s.characters.list,
+    botMap: s.characters.map,
+    impersonate: s.impersonating,
+  }))
+  const zip = new JSZip()
+
+  for (const char of chars.allBots) {
+    try {
+      const cardBlob = await getCharCardBlob(char._id, format, schema)
+      if (!cardBlob) continue
+      zip.file(`${char.name}.card.png`, cardBlob)
+    } catch (error) {
+      console.error(`Failed to add character card for ${char.name}: ${error}`)
+    }
+  }
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' })
+  const zipUrl = URL.createObjectURL(zipBlob)
+
+  const anchor = document.createElement('a')
+  anchor.href = zipUrl
+  anchor.download = 'character_cards.zip'
+  anchor.click()
+  URL.revokeObjectURL(anchor.href)
+}
+
+async function getCharCardBlob(charId: string, format: string, schema: string) {
+  let char: AppSchema.Character
+  const res = await charsApi.getCharacterDetail(charId)
+  if (res.error) {
+    return toastStore.error(`Failed to download character: ${res.error}`)
+  } else {
+    char = res.result!
+  }
+
+  const json = charToJson(char, format, schema)
+  const image = getAssetUrl(char.avatar!)
+  /**
+   * Only PNG and APNG files can contain embedded character information
+   * If the avatar image is not either of these formats, we must convert it
+   */
+
+  const dataurl = await imageToDataURL(image)
+  const base64 = dataurl.split(',')[1]
+  const imgBuffer = Buffer.from(window.atob(base64), 'binary')
+  const chunks = extract(imgBuffer).filter((chunk) => chunk.name !== 'tEXt')
+  const output = Buffer.from(json, 'utf8').toString('base64')
+  const lastChunkIndex = chunks.length - 1
+  const chunksToExport = [
+    ...chunks.slice(0, lastChunkIndex),
+    text.encode('chara', output),
+    chunks[lastChunkIndex],
+  ]
+  return new Blob([Buffer.from(encode(chunksToExport))])
 }
 
 export async function downloadCharCard(
