@@ -88,7 +88,15 @@ export function sanitiseAndTrim(
   characters: Record<string, AppSchema.Character> | undefined,
   members: AppSchema.Profile[]
 ) {
-  const parsed = sanitise(text.replace(prompt, ''))
+  const parsed = sanitise(
+    text
+      .replace(prompt, '')
+      .replace(
+        // Removes chain of thought scratchpad
+        /^(```)?\n?<thinking>((?:(?!<\/thinking>).)*)<\/thinking>\n?(```\n)?|<thinking>.*$/s,
+        ''
+      )
+  )
   const trimmed = trimResponseV2(parsed, char, members, characters, ['END_OF_DIALOG'])
     .split(`${char.name}:`)
     .join('')
